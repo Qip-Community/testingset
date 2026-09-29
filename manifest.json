@@ -1,0 +1,17 @@
+{
+  "name": "MyNet — социальная сеть",
+  "short_name": "MyNet",
+  "description": "Простая соцсеть для друзей",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#38bdf8",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192'%3E%3Crect width='192' height='192' rx='40' fill='%2338bdf8'/%3E%3Ctext x='50%25' y='55%25' font-size='110' fill='%230f172a' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif' font-weight='bold'%3EM%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

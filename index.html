@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#38bdf8">
+<title>MyNet — соцсеть</title>
+<link rel="manifest" href="./manifest.json">
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --border: #334155;
+    --text: #e2e8f0; --muted: #64748b; --accent: #38bdf8;
+    --danger: #f43f5e; --success: #22c55e;
+  }
+  body.light {
+    --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0;
+    --text: #0f172a; --muted: #64748b; --accent: #0284c7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); min-height: 100vh; transition: 0.2s; }
+  .container { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+  h1 { text-align: center; color: var(--accent); margin-bottom: 16px; }
+  h2 { font-size: 22px; }
+  h3 { font-size: 16px; }
+  .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
+  input, textarea, select {
+    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 14px; margin-bottom: 10px;
+    font-family: inherit; outline: none;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 60px; }
+  button {
+    padding: 10px 14px; border-radius: 8px; border: none; background: var(--accent);
+    color: #0f172a; font-weight: 600; cursor: pointer; font-size: 14px;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.9; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  button.danger { background: var(--danger); color: #fff; }
+  button.small { padding: 6px 10px; font-size: 12px; }
+  button.icon { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px 8px; font-size: 18px; }
+
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row.wrap { flex-wrap: wrap; }
+  .hidden { display: none !important; }
+  .muted { color: var(--muted); font-size: 13px; }
+
+  /* Шапка */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; background: var(--card); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar h2 { color: var(--accent); font-size: 20px; }
+  .topbar-btns { display: flex; gap: 6px; align-items: center; }
+  .badge {
+    position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff;
+    font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold;
+    min-width: 18px; text-align: center;
+  }
+  .icon-wrap { position: relative; }
+
+  /* Навигация */
+  .nav {
+    display: flex; background: var(--card); border-radius: 12px;
+    padding: 4px; margin-bottom: 12px; border: 1px solid var(--border);
+  }
+  .nav button {
+    flex: 1; background: none; color: var(--muted); padding: 10px 4px;
+    border-radius: 8px; font-size: 13px;
+  }
+  .nav button.active { background: var(--accent); color: #0f172a; }
+
+  /* Аватар */
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+    background: var(--accent); flex-shrink: 0;
+  }
+  .avatar.lg { width: 80px; height: 80px; }
+  .avatar.sm { width: 32px; height: 32px; }
+  .avatar.xs { width: 24px; height: 24px; }
+
+  /* Пост */
+  .post-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .post-head .name { font-weight: 600; color: var(--accent); cursor: pointer; }
+  .post-text { white-space: pre-wrap; margin: 8px 0; line-height: 1.5; word-wrap: break-word; }
+  .post-img { max-width: 100%; border-radius: 8px; margin: 8px 0; display: block; }
+  .post-actions { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
+  .like-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px; }
+
+  /* Комментарии */
+  .comments { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .comment { display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px; align-items: flex-start; }
+  .comment .author { font-weight: 600; color: var(--accent); cursor: pointer; margin-right: 4px; }
+  .comment-input { display: flex; gap: 6px; margin-top: 8px; }
+  .comment-input input { margin: 0; flex: 1; padding: 8px; font-size: 13px; }
+  .comment-input button { padding: 8px 12px; font-size: 13px; }
+
+  /* Поиск */
+  .user-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .user-item:last-child { border-bottom: none; }
+  .user-item .info { flex: 1; min-width: 0; }
+  .user-item .name { font-weight: 600; color: var(--accent); cursor: pointer; }
+  .user-item .name:hover { text-decoration: underline; }
+
+  /* Чат */
+  .chat-list-item { display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer; border-radius: 8px; }
+  .chat-list-item:hover { background: var(--bg); }
+  .messages { height: 400px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--bg); border-radius: 8px; }
+  .msg { max-width: 70%; padding: 8px 12px; border-radius: 12px; font-size: 14px; word-wrap: break-word; }
+  .msg.me { align-self: flex-end; background: var(--accent); color: #0f172a; }
+  .msg.them { align-self: flex-start; background: var(--card); border: 1px solid var(--border); }
+  .msg-time { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+
+  /* Уведомления */
+  .notif-item { padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px; display: flex; gap: 10px; align-items: center; }
+  .notif-item.unread { background: rgba(56, 189, 248, 0.1); border-color: var(--accent); }
+
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 20px; border-radius: 8px; z-index: 1000; font-size: 14px;
+    max-width: 90vw; text-align: center;
+  }
+  .loader { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast hidden"></div>
+
+<!-- ============ ЭКРАН АВТОРИЗАЦИИ ============ -->
+<div id="authScreen" class="container">
+  <h1>🌐 MyNet</h1>
+  <div class="card">
+    <div class="nav" style="margin-bottom:12px;">
+      <button id="tabLogin" class="active">Вход</button>
+      <button id="tabRegister">Регистрация</button>
+    </div>
+    <input id="email" type="email" placeholder="Email" autocomplete="email">
+    <input id="password" type="password" placeholder="Пароль (мин. 6 символов)" autocomplete="current-password">
+    <input id="username" type="text" placeholder="Имя пользователя" class="hidden">
+    <button id="authBtn" style="width:100%;">Войти</button>
+    <p id="authMsg" style="color:var(--danger); font-size:13px; margin-top:8px; word-break:break-word;"></p>
+  </div>
+</div>
+
+<!-- ============ ОСНОВНОЕ ПРИЛОЖЕНИЕ ============ -->
+<div id="appScreen" class="hidden">
+  <div class="topbar">
+    <h2>🌐 MyNet</h2>
+    <div class="topbar-btns">
+      <div class="icon-wrap">
+        <button class="icon" id="notifToggle" title="Уведомления">🔔<span id="notifBadge" class="badge hidden">0</span></button>
+      </div>
+      <button class="icon" id="themeToggle" title="Тема">🌙</button>
+      <button class="ghost small" id="logoutBtn">Выйти</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Уведомления (выпадашка) -->
+    <div id="notifPanel" class="card hidden" style="max-height:400px; overflow-y:auto;">
+      <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+        <h3>🔔 Уведомления</h3>
+        <button class="ghost small" id="clearNotifs">Очистить</button>
+      </div>
+      <div id="notifList"></div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="nav">
+      <button data-tab="feed" class="active">🏠 Лента</button>
+      <button data-tab="search">🔍 Поиск</button>
+      <button data-tab="chats">💬 Чаты</button>
+      <button data-tab="profile">👤 Я</button>
+    </div>
+
+    <!-- ЛЕНТА -->
+    <div id="tab-feed">
+      <div class="card">
+        <div class="row" style="margin-bottom:10px;">
+          <img id="postAvatar" class="avatar" src="">
+          <b id="postAuthor"></b>
+        </div>
+        <textarea id="postText" placeholder="Что нового?"></textarea>
+        <input type="file" id="postImage" accept="image/*" style="display:none;">
+        <div class="row" style="justify-content:space-between;">
+          <button class="ghost small" id="pickImage">📷 Картинка</button>
+          <span id="imgPreview" class="muted" style="font-size:12px;"></span>
+          <button id="postBtn">Опубликовать</button>
+        </div>
+      </div>
+      <div id="feed"></div>
+    </div>
+
+    <!-- ПОИСК -->
+    <div id="tab-search" class="hidden">
+      <div class="card">
+        <input id="searchInput" placeholder="🔍 Поиск по имени...">
+      </div>
+      <div class="card" id="searchResults">
+        <p class="empty">Начни вводить имя пользователя</p>
+      </div>
+    </div>
+
+    <!-- ЧАТЫ -->
+    <div id="tab-chats" class="hidden">
+      <div id="chatsList" class="card">
+        <p class="empty">Пока нет чатов. Найди друга в поиске 💬</p>
+      </div>
+      <div id="chatWindow" class="card hidden">
+        <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+          <div class="row">
+            <button class="icon" id="backToChats">←</button>
+            <img id="chatAvatar" class="avatar sm" src="">
+            <b id="chatName"></b>
+          </div>
+        </div>
+        <div class="messages" id="messages"></div>
+        <div class="row" style="margin-top:10px;">
+          <input id="msgInput" placeholder="Сообщение..." style="margin:0;">
+          <button id="sendMsg">→</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ПРОФИЛЬ -->
+    <div id="tab-profile" class="hidden">
+      <div id="profileView"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db, IMGBB_KEY } from "./firebase-config.js";
+import {
+  createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged, updateProfile
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  collection, addDoc, onSnapshot, query, orderBy, where, serverTimestamp,
+  doc, getDoc, setDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove,
+  getDocs, limit, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const $ = id => document.getElementById(id);
+
+let me = null;          // firebase user
+let meProfile = null;   // profile из firestore
+let currentChat = null; // { uid, chatId }
+let unsubFeed = null, unsubMessages = null, unsubChats = null, unsubNotifs = null;
+let notifCount = 0;
+
+// ========== TOAST ==========
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.remove("hidden");
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.add("hidden"), 2500);
+}
+
+// ========== ТЕМА ==========
+(function initTheme() {
+  const theme = localStorage.getItem("theme") || "dark";
+  document.body.classList.toggle("light", theme === "light");
+  $("themeToggle").textContent = theme === "light" ? "☀️" : "🌙";
+})();
+
+$("themeToggle").onclick = () => {
+  const isLight = document.body.classList.toggle("light");
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+  $("themeToggle").textContent = isLight ? "☀️" : "🌙";
+};
+
+// ========== ЗАГРУЗКА КАРТИНОК (IMGBB) ==========
+async function uploadImage(file) {
+  if (file.size > 32 * 1024 * 1024) throw new Error("Файл больше 32 МБ");
+  const formData = new FormData();
+  formData.append("image", file);
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+    method: "POST",
+    body: formData
+  });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error?.message || "Ошибка загрузки");
+  return data.data.url;
+}
+
+// ========== АВАТАР ==========
+function avatarUrl(profile) {
+  if (profile?.photoURL) return profile.photoURL;
+  const letter = (profile?.username || "?")[0].toUpperCase();
+  return `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80">
+      <rect width="80" height="80" fill="#38bdf8"/>
+      <text x="50%" y="55%" font-size="36" fill="#0f172a" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-weight="bold">${letter}</text>
+    </svg>`)}`;
+}
+
+// ========== ESCAPE HTML ==========
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+// ========== АВТОРИЗАЦИЯ ==========
+let isRegister = false;
+$("tabLogin").onclick = () => {
+  isRegister = false;
+  $("tabLogin").classList.add("active");
+  $("tabRegister").classList.remove("active");
+  $("username").classList.add("hidden");
+  $("authBtn").textContent = "Войти";
+};
+$("tabRegister").onclick = () => {
+  isRegister = true;
+  $("tabRegister").classList.add("active");
+  $("tabLogin").classList.remove("active");
+  $("username").classList.remove("hidden");
+  $("authBtn").textContent = "Зарегистрироваться";
+};
+
+$("authBtn").onclick = async () => {
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  const username = $("username").value.trim();
+  $("authMsg").textContent = "";
+  try {
+    if (isRegister) {
+      if (!username) return $("authMsg").textContent = "Введите имя";
+      if (password.length < 6) return $("authMsg").textContent = "Пароль минимум 6 символов";
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(cred.user, { displayName: username });
+      await setDoc(doc(db, "users", cred.user.uid), {
+        uid: cred.user.uid,
+        username,
+        usernameLower: username.toLowerCase(),
+        email,
+        bio: "",
+        photoURL: "",
+        friends: [],
+        friendRequests: [],
+        sentRequests: [],
+        createdAt: serverTimestamp()
+      });
+      toast("Добро пожаловать, " + username + "! 🎉");
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+  } catch (e) {
+    $("authMsg").textContent = e.message;
+  }
+};
+
+$("logoutBtn").onclick = () => signOut(auth);
+
+// ========== СОСТОЯНИЕ АВТОРИЗАЦИИ ==========
+onAuthStateChanged(auth, async user => {
+  me = user;
+  if (user) {
+    $("authScreen").classList.add("hidden");
+    $("appScreen").classList.remove("hidden");
+    const snap = await getDoc(doc(db, "users", user.uid));
+    meProfile = snap.exists() ? snap.data() : { username: user.displayName || "User" };
+    $("postAuthor").textContent = meProfile.username;
+    $("postAvatar").src = avatarUrl(meProfile);
+    loadFeed();
+    loadNotifications();
+    switchTab("feed");
+  } else {
+    $("authScreen").classList.remove("hidden");
+    $("appScreen").classList.add("hidden");
+    if (unsubFeed) unsubFeed();
+    if (unsubMessages) unsubMessages();
+    if (unsubChats) unsubChats();
+    if (unsubNotifs) unsubNotifs();
+  }
+});
+
+// ========== НАВИГАЦИЯ ==========
+document.querySelectorAll(".nav button").forEach(btn => {
+  btn.onclick = () => switchTab(btn.dataset.tab);
+});
+
+function switchTab(tab) {
+  document.querySelectorAll(".nav button").forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === tab);
+  });
+  ["feed", "search", "chats", "profile"].forEach(t => {
+    $("tab-" + t).classList.toggle("hidden", t !== tab);
+  });
+  if (tab === "chats") loadChatsList();
+  if (tab === "profile") renderMyProfile();
+  if (tab === "search") $("searchInput").focus();
+}
+
+// ========== ПОСТЫ ==========
+let selectedImageFile = null;
+$("pickImage").onclick = () => $("postImage").click();
+$("postImage").onchange = e => {
+  selectedImageFile = e.target.files[0];
+  $("imgPreview").textContent = selectedImageFile ? "✅ " + selectedImageFile.name : "";
+};
+
+$("postBtn").onclick = async () => {
+  const text = $("postText").value.trim();
+  if (!text && !selectedImageFile) return toast("Пустой пост");
+  $("postBtn").disabled = true;
+  const oldText = $("postBtn").textContent;
+  $("postBtn").innerHTML = '<span class="loader"></span>';
+  try {
+    let imageUrl = "";
+    if (selectedImageFile) {
+      imageUrl = await uploadImage(selectedImageFile);
+    }
+    await addDoc(collection(db, "posts"), {
+      text,
+      imageUrl,
+      uid: me.uid,
+      author: meProfile.username,
+      authorPhoto: meProfile.photoURL || "",
+      createdAt: serverTimestamp(),
+      likes: []
+    });
+    $("postText").value = "";
+    $("postImage").value = "";
+    $("imgPreview").textContent = "";
+    selectedImageFile = null;
+    toast("Опубликовано ✅");
+  } catch (e) {
+    toast("Ошибка: " + e.message);
+  }
+  $("postBtn").disabled = false;
+  $("postBtn").textContent = oldText;
+};
+
+function loadFeed() {
+  if (unsubFeed) unsubFeed();
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(50));
+  unsubFeed = onSnapshot(q, snap => {
+    const feed = $("feed");
+    feed.innerHTML = "";
+    if (snap.empty) {
+      feed.innerHTML = '<div class="card empty">Пока нет постов. Будь первым! 🎉</div>';
+      return;
+    }
+    snap.forEach(d => feed.appendChild(renderPost(d.id, d.data())));
+  });
+}
+
+function renderPost(id, p) {
+  const liked = (p.likes || []).includes(me.uid);
+  const isMine = p.uid === me.uid;
+  const time = p.createdAt?.toDate?.().toLocaleString("ru-RU", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" }) || "сейчас";
+
+  const div = document.createElement("div");
+  div.className = "card";
+  div.innerHTML = `
+    <div class="post-head">
+      <img class="avatar sm" src="${avatarUrl({ username: p.author, photoURL: p.authorPhoto })}">
+      <div style="flex:1; min-width:0;">
+        <div class="name" data-uid="${p.uid}">${esc(p.author)}</div>
+        <div class="muted">${time}</div>
+      </div>
+      ${isMine ? `<button class="icon del-post" title="Удалить">🗑</button>` : ""}
+    </div>
+    ${p.text ? `<div class="post-text">${esc(p.text)}</div>` : ""}
+    ${p.imageUrl ? `<img class="post-img" src="${p.imageUrl}" loading="lazy">` : ""}
+    <div class="post-actions">
+      <button class="like-btn ${liked ? "liked" : ""}" style="${liked ? "color:var(--danger);" : ""}">${liked ? "❤️" : "🤍"} ${(p.likes||[]).length}</button>
+      <button class="like-btn toggle-comments">💬 Комментировать</button>
+    </div>
+    <div class="comments hidden">
+      <div class="comments-list"></div>
+      <div class="comment-input">
+        <input placeholder="Комментарий...">
+        <button>→</button>
+      </div>
+    </div>
+  `;
+
+  div.querySelector(".name").onclick = () => openProfile(p.uid);
+
+  div.querySelector(".like-btn").onclick = async () => {
+    const ref = doc(db, "posts", id);
+    await updateDoc(ref, {
+      likes: liked ? arrayRemove(me.uid) : arrayUnion(me.uid)
+    });
+  };
+
+  if (isMine) {
+    div.querySelector(".del-post").onclick = async () => {
+      if (confirm("Удалить пост?")) await deleteDoc(doc(db, "posts", id));
+    };
+  }
+
+  const commentsBlock = div.querySelector(".comments");
+  const commentsList = div.querySelector(".comments-list");
+  div.querySelector(".toggle-comments").onclick = () => {
+    commentsBlock.classList.toggle("hidden");
+    if (!commentsBlock.classList.contains("hidden") && !commentsList.dataset.loaded) {
+      loadComments(id, commentsList);
+      commentsList.dataset.loaded = "1";
+    }
+  };
+
+  const input = div.querySelector(".comment-input input");
+  const sendBtn = div.querySelector(".comment-input button");
+  const sendComment = async () => {
+    const text = input.value.trim();
+    if (!text) return;
+    await addDoc(collection(db, "posts", id, "comments"), {
+      text, uid: me.uid, author: meProfile.username,
+      authorPhoto: meProfile.photoURL || "",
+      createdAt: serverTimestamp()
+    });
+    // Уведомление автору поста
+    if (p.uid !== me.uid) {
+      await createNotification(p.uid, {
+        type: "comment",
+        fromUid: me.uid,
+        fromName: meProfile.username,
+        text: text.slice(0, 60),
+        postId: id
+      });
+    }
+    input.value = "";
+  };
+  sendBtn.onclick = sendComment;
+  input.onkeydown = e => { if (e.key === "Enter") sendComment(); };
+
+  return div;
+}
+
+function loadComments(postId, container) {
+  const q = query(collection(db, "posts", postId, "comments"), orderBy("createdAt", "asc"));
+  onSnapshot(q, snap => {
+    container.innerHTML = "";
+    if (snap.empty) {
+      container.innerHTML = '<p class="muted" style="font-size:12px;">Нет комментариев</p>';
+      return;
+    }
+    snap.forEach(d => {
+      const c = d.data();
+      const el = document.createElement("div");
+      el.className = "comment";
+      el.innerHTML = `
+        <img class="avatar xs" src="${avatarUrl({ username: c.author, photoURL: c.authorPhoto })}">
+        <div style="flex:1;">
+          <span class="author" data-uid="${c.uid}">${esc(c.author)}</span>
+          <span>${esc(c.text)}</span>
+        </div>
+      `;
+      el.querySelector(".author").onclick = () => openProfile(c.uid);
+      container.appendChild(el);
+    });
+  });
+}
+
+// ========== УВЕДОМЛЕНИЯ ==========
+async function createNotification(toUid, data) {
+  if (toUid === me.uid) return;
+  await addDoc(collection(db, "notifications", toUid, "items"), {
+    ...data,
+    read: false,
+    createdAt: serverTimestamp()
+  });
+}
+
+function loadNotifications() {
+  if (unsubNotifs) unsubNotifs();
+  const q = query(
+    collection(db, "notifications", me.uid, "items"),
+    orderBy("createdAt", "desc"),
+    limit(30)
+  );
+  unsubNotifs = onSnapshot(q, snap => {
+    const list = $("notifList");
+    list.innerHTML = "";
+    let unread = 0;
+    if (snap.empty) {
+      list.innerHTML = '<p class="empty">Нет уведомлений</p>';
+    } else {
+      snap.forEach(d => {
+        const n = d.data();
+        if (!n.read) unread++;
+        const el = document.createElement("div");
+        el.className = "notif-item" + (n.read ? "" : " unread");
+        let text = "";
+        let onClick = null;
+        if (n.type === "friend_request") {
+          text = `👥 <b>${esc(n.fromName)}</b> хочет добавить вас в друзья`;
+          onClick = async () => {
+            await acceptFriendRequest(n.fromUid);
+            await updateDoc(doc(db, "notifications", me.uid, "items", d.id), { read: true });
+          };
+        } else if (n.type === "friend_accept") {
+          text = `✅ <b>${esc(n.fromName)}</b> принял вашу заявку`;
+        } else if (n.type === "comment") {
+          text = `💬 <b>${esc(n.fromName)}</b>: ${esc(n.text)}`;
+        } else if (n.type === "message") {
+          text = `✉️ Новое сообщение от <b>${esc(n.fromName)}</b>`;
+          onClick = () => {
+            switchTab("chats");
+            openChat(n.fromUid, n.fromName);
+            updateDoc(doc(db, "notifications", me.uid, "items", d.id), { read: true });
+          };
+        }
+        el.innerHTML = `<div style="flex:1;">${text}</div>`;
+        if (onClick) {
+          el.style.cursor = "pointer";
+          el.onclick = onClick;
+        }
+        list.appendChild(el);
+      });
+    }
+    notifCount = unread;
+    const badge = $("notifBadge");
+    badge.textContent = unread;
+    badge.classList.toggle("hidden", unread === 0);
+  });
+}
+
+$("notifToggle").onclick = async () => {
+  const panel = $("notifPanel");
+  panel.classList.toggle("hidden");
+  // Помечаем прочитанными
+  if (!panel.classList.contains("hidden") && notifCount > 0) {
+    const q = query(
+      collection(db, "notifications", me.uid, "items"),
+      where("read", "==", false)
+    );
+    const snap = await getDocs(q);
+    const batch = writeBatch(db);
+    snap.forEach(d => batch.update(d.ref, { read: true }));
+    await batch.commit();
+  }
+};
+
+$("clearNotifs").onclick = async () => {
+  const snap = await getDocs(collection(db, "notifications", me.uid, "items"));
+  const batch = writeBatch(db);
+  snap.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+  toast("Очищено");
+};
+
+// ========== ПОИСК ==========
+let searchTimer;
+$("searchInput").oninput = e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => searchUsers(e.target.value.trim()), 300);
+};
+
+async function searchUsers(text) {
+  const results = $("searchResults");
+  if (!text) {
+    results.innerHTML = '<p class="empty">Начни вводить имя пользователя</p>';
+    return;
+  }
+  const q = query(
+    collection(db, "users"),
+    where("usernameLower", ">=", text.toLowerCase()),
+    where("usernameLower", "<=", text.toLowerCase() + "\uf8ff"),
+    limit(20)
+  );
+  const snap = await getDocs(q);
+  results.innerHTML = "";
+  if (snap.empty) {
+    results.innerHTML = '<p class="empty">Никого не найдено 😔</p>';
+    return;
+  }
+  snap.forEach(d => {
+    if (d.id === me.uid) return;
+    results.appendChild(renderUserItem(d.id, d.data()));
+  });
+}
+
+function renderUserItem(uid, u) {
+  const div = document.createElement("div");
+  div.className = "user-item";
+
+  const isFriend = (meProfile.friends || []).includes(uid);
+  const sent = (meProfile.sentRequests || []).includes(uid);
+  const incoming = (meProfile.friendRequests || []).includes(uid);
+
+  let btnHtml = "";
+  if (isFriend) btnHtml = `<button class="ghost small" data-action="remove">Удалить</button>`;
+  else if (sent) btnHtml = `<button class="ghost small" disabled>Отправлено</button>`;
+  else if (incoming) btnHtml = `<button class="small" data-action="accept">Принять</button>`;
+  else btnHtml = `<button class="small" data-action="add">+ Дружить</button>`;
+
+  div.innerHTML = `
+    <img class="avatar" src="${avatarUrl(u)}">
+    <div class="info">
+      <div class="name" data-uid="${uid}">${esc(u.username)}</div>
+      <div class="muted">${esc(u.bio || "Без описания")}</div>
+    </div>
+    <button class="ghost small" data-action="message" title="Написать">💬</button>
+    ${btnHtml}
+  `;
+
+  div.querySelector(".name").onclick = () => openProfile(uid);
+
+  div.querySelector('[data-action="message"]').onclick = () => {
+    switchTab("chats");
+    openChat(uid, u.username, u.photoURL);
+  };
+
+  const actionBtn = div.querySelector("[data-action]:not([data-action='message'])");
+  if (actionBtn) {
+    actionBtn.onclick = async () => {
+      const action = actionBtn.dataset.action;
+      if (action === "add") await sendFriendRequest(uid, u.username);
+      if (action === "accept") await acceptFriendRequest(uid);
+      if (action === "remove") await removeFriend(uid);
+    };
+  }
+  return div;
+}
+
+async function sendFriendRequest(targetUid, targetName) {
+  await updateDoc(doc(db, "users", me.uid), {
+    sentRequests: arrayUnion(targetUid)
+  });
+  await updateDoc(doc(db, "users", targetUid), {
+    friendRequests: arrayUnion(me.uid)
+  });
+  meProfile.sentRequests = [...(meProfile.sentRequests || []), targetUid];
+  await createNotification(targetUid, {
+    type: "friend_request",
+    fromUid: me.uid,
+    fromName: meProfile.username
+  });
+  toast("Заявка отправлена ✅");
+  refreshSearch();
+}
+
+async function acceptFriendRequest(fromUid) {
+  await updateDoc(doc(db, "users", me.uid), {
+    friends: arrayUnion(fromUid),
+    friendRequests: arrayRemove(fromUid)
+  });
+  await updateDoc(doc(db, "users", fromUid), {
+    friends: arrayUnion(me.uid),
+    sentRequests: arrayRemove(me.uid)
+  });
+  meProfile.friends = [...(meProfile.friends || []), fromUid];
+  meProfile.friendRequests = (meProfile.friendRequests || []).filter(x => x !== fromUid);
+  await createNotification(fromUid, {
+    type: "friend_accept",
+    fromUid: me.uid,
+    fromName: meProfile.username
+  });
+  toast("Теперь вы друзья 🎉");
+  refreshSearch();
+}
+
+async function removeFriend(uid) {
+  if (!confirm("Удалить из друзей?")) return;
+  await updateDoc(doc(db, "users", me.uid), { friends: arrayRemove(uid) });
+  await updateDoc(doc(db, "users", uid), { friends: arrayRemove(me.uid) });
+  meProfile.friends = (meProfile.friends || []).filter(x => x !== uid);
+  toast("Удалено");
+  refreshSearch();
+}
+
+function refreshSearch() {
+  const v = $("searchInput").value.trim();
+  if (v) searchUsers(v);
+}
+
+// ========== ПРОФИЛЬ ==========
+async function openProfile(uid) {
+  switchTab("profile");
+  if (uid === me.uid) return renderMyProfile();
+  const snap = await getDoc(doc(db, "users", uid));
+  if (!snap.exists()) return toast("Пользователь не найден");
+  renderProfile(uid, snap.data(), false);
+}
+
+async function renderMyProfile() {
+  const snap = await getDoc(doc(db, "users", me.uid));
+  if (snap.exists()) meProfile = snap.data();
+  renderProfile(me.uid, meProfile, true);
+}
+
+async function renderProfile(uid, u, isMe = false) {
+  const container = $("profileView");
+  container.innerHTML = '<div class="card empty"><span class="loader"></span> Загрузка...</div>';
+
+  const postsSnap = await getDocs(query(
+    collection(db, "posts"), where("uid", "==", uid), orderBy("createdAt", "desc"), limit(30)
+  ));
+
+  const isFriend = (meProfile.friends || []).includes(uid);
+  const sent = (meProfile.sentRequests || []).includes(uid);
+  const incoming = (meProfile.friendRequests || []).includes(uid);
+
+  let actionsHtml = "";
+  if (!isMe) {
+    if (isFriend) actionsHtml = `<button class="ghost small" id="pRemove">Удалить из друзей</button>`;
+    else if (sent) actionsHtml = `<button class="ghost small" disabled>Заявка отправлена</button>`;
+    else if (incoming) actionsHtml = `<button class="small" id="pAccept">Принять заявку</button>`;
+    else actionsHtml = `<button class="small" id="pAdd">+ Дружить</button>`;
+    actionsHtml += ` <button class="ghost small" id="pMsg">💬 Написать</button>`;
+  } else {
+    actionsHtml = `<button class="small" id="editProfile">✏️ Редактировать</button>`;
+  }
+
+  container.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <img class="avatar lg" src="${avatarUrl(u)}" style="margin:0 auto 10px;">
+      <h2>${esc(u.username)}</h2>
+      <p class="muted" style="margin:8px 0;">${esc(u.bio || "Без описания")}</p>
+      <p class="muted">👥 Друзей: ${(u.friends || []).length}</p>
+      <div style="margin-top:12px;">${actionsHtml}</div>
+    </div>
+    <div id="editForm" class="card hidden">
+      <h3 style="margin-bottom:10px;">Редактировать профиль</h3>
+      <input id="editName" placeholder="Имя" value="${esc(u.username)}">
+      <textarea id="editBio" placeholder="О себе...">${esc(u.bio || "")}</textarea>
+      <input type="file" id="editAvatar" accept="image/*" style="display:none;">
+      <div class="row" style="justify-content:space-between;">
+        <button class="ghost small" id="pickAvatar">📷 Аватар</button>
+        <div>
+          <button class="ghost small" id="cancelEdit">Отмена</button>
+          <button class="small" id="saveProfile">Сохранить</button>
+        </div>
+      </div>
+    </div>
+    <h3 style="margin:16px 0 8px;">📝 Посты</h3>
+    <div id="profilePosts"></div>
+  `;
+
+  const postsContainer = container.querySelector("#profilePosts");
+  if (postsSnap.empty) {
+    postsContainer.innerHTML = '<div class="card empty">Нет постов</div>';
+  } else {
+    postsSnap.forEach(d => postsContainer.appendChild(renderPost(d.id, d.data())));
+  }
+
+  const pAdd = container.querySelector("#pAdd");
+  if (pAdd) pAdd.onclick = () => sendFriendRequest(uid, u.username).then(() => openProfile(uid));
+
+  const pAccept = container.querySelector("#pAccept");
+  if (pAccept) pAccept.onclick = () => acceptFriendRequest(uid).then(() => openProfile(uid));
+
+  const pRemove = container.querySelector("#pRemove");
+  if (pRemove) pRemove.onclick = () => removeFriend(uid).then(() => openProfile(uid));
+
+  const pMsg = container.querySelector("#pMsg");
+  if (pMsg) pMsg.onclick = () => {
+    switchTab("chats");
+    openChat(uid, u.username, u.photoURL);
+  };
+
+  if (isMe) {
+    container.querySelector("#editProfile").onclick = () => {
+      container.querySelector("#editForm").classList.remove("hidden");
+    };
+    container.querySelector("#cancelEdit").onclick = () => {
+      container.querySelector("#editForm").classList.add("hidden");
+    };
+
+    let newAvatar = null;
+    container.querySelector("#pickAvatar").onclick = () => container.querySelector("#editAvatar").click();
+    container.querySelector("#editAvatar").onchange = e => { newAvatar = e.target.files[0]; };
+
+    container.querySelector("#saveProfile").onclick = async () => {
+      const name = container.querySelector("#editName").value.trim();
+      const bio = container.querySelector("#editBio").value.trim();
+      if (!name) return toast("Введите имя");
+      const saveBtn = container.querySelector("#saveProfile");
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="loader"></span>';
+      try {
+        const updates = { username: name, usernameLower: name.toLowerCase(), bio };
+        if (newAvatar) {
+          updates.photoURL = await uploadImage(newAvatar);
+        }
+        await updateDoc(doc(db, "users", me.uid), updates);
+        meProfile = { ...meProfile, ...updates };
+        $("postAuthor").textContent = meProfile.username;
+        $("postAvatar").src = avatarUrl(meProfile);
+        toast("Профиль обновлён ✅");
+        renderMyProfile();
+      } catch (e) {
+        toast("Ошибка: " + e.message);
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Сохранить";
+      }
+    };
+  }
+}
+
+// ========== ЧАТЫ ==========
+async function loadChatsList() {
+  const container = $("chatsList");
+  const q1 = query(collection(db, "chats"), where("participants", "array-contains", me.uid));
+  const snap = await getDocs(q1);
+  container.innerHTML = "";
+  $("chatWindow").classList.add("hidden");
+  container.classList.remove("hidden");
+
+  if (snap.empty) {
+    container.innerHTML = '<p class="empty">Пока нет чатов. Найди друга в поиске 💬</p>';
+    return;
+  }
+
+  const items = [];
+  for (const d of snap.docs) {
+    const chat = d.data();
+    const otherUid = chat.participants.find(x => x !== me.uid);
+    const uSnap = await getDoc(doc(db, "users", otherUid));
+    const u = uSnap.exists() ? uSnap.data() : { username: "Unknown" };
+    items.push({ id: d.id, otherUid, u, lastMessage: chat.lastMessage || "", updatedAt: chat.updatedAt });
+  }
+  items.sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+
+  items.forEach(item => {
+    const el = document.createElement("div");
+    el.className = "chat-list-item";
+    el.innerHTML = `
+      <img class="avatar" src="${avatarUrl(item.u)}">
+      <div style="flex:1; min-width:0;">
+        <div style="font-weight:600;">${esc(item.u.username)}</div>
+        <div class="muted" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(item.lastMessage || "Нет сообщений")}</div>
+      </div>
+    `;
+    el.onclick = () => openChat(item.otherUid, item.u.username, item.u.photoURL, item.id);
+    container.appendChild(el);
+  });
+}
+
+async function openChat(otherUid, otherName, otherPhoto, chatId = null) {
+  $("chatsList").classList.add("hidden");
+  $("chatWindow").classList.remove("hidden");
+  $("chatName").textContent = otherName;
+  $("chatAvatar").src = avatarUrl({ username: otherName, photoURL: otherPhoto });
+
+  if (!chatId) {
+    const q = query(collection(db, "chats"), where("participants", "array-contains", me.uid));
+    const snap = await getDocs(q);
+    for (const d of snap.docs) {
+      if (d.data().participants.includes(otherUid)) {
+        chatId = d.id;
+        break;
+      }
+    }
+    if (!chatId) {
+      const ref = await addDoc(collection(db, "chats"), {
+        participants: [me.uid, otherUid],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastMessage: ""
+      });
+      chatId = ref.id;
+    }
+  }
+
+  currentChat = { uid: otherUid, chatId };
+  loadMessages(chatId);
+}
+
+$("backToChats").onclick = () => {
+  if (unsubMessages) unsubMessages();
+  loadChatsList();
+};
+
+function loadMessages(chatId) {
+  if (unsubMessages) unsubMessages();
+  const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"), limit(200));
+  unsubMessages = onSnapshot(q, snap => {
+    const box = $("messages");
+    box.innerHTML = "";
+    snap.forEach(d => {
+      const m = d.data();
+      const mine = m.uid === me.uid;
+      const time = m.createdAt?.toDate?.().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) || "";
+      const el = document.createElement("div");
+      el.className = "msg " + (mine ? "me" : "them");
+      el.innerHTML = `${esc(m.text)}<div class="msg-time">${time}</div>`;
+      box.appendChild(el);
+    });
+    box.scrollTop = box.scrollHeight;
+  });
+}
+
+$("sendMsg").onclick = async () => {
+  const text = $("msgInput").value.trim();
+  if (!text || !currentChat) return;
+  $("msgInput").value = "";
+  await addDoc(collection(db, "chats", currentChat.chatId, "messages"), {
+    text, uid: me.uid, createdAt: serverTimestamp()
+  });
+  await updateDoc(doc(db, "chats", currentChat.chatId), {
+    lastMessage: text, updatedAt: serverTimestamp()
+  });
+  // Уведомление получателю
+  await createNotification(currentChat.uid, {
+    type: "message",
+    fromUid: me.uid,
+    fromName: meProfile.username,
+    text: text.slice(0, 60)
+  });
+};
+$("msgInput").onkeydown = e => { if (e.key === "Enter") $("sendMsg").click(); };
+
+// ========== PWA ==========
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
